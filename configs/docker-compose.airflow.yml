@@ -1,0 +1,132 @@
+version: '3'
+
+services:
+  airflow-postgresql:
+    image: "postgres:11.4"
+    volumes:
+      - airflow-postgresql:/bitnami/postgresql
+      - ../db_airflow_backup:/backup
+      - ./db_backup.sh:/bin/db_backup.sh
+    environment:
+      - POSTGRES_DB=${AIRFLOW_DB_NAME}
+      - POSTGRES_USER=${AIRFLOW_DB_USER}
+      - POSTGRES_PASSWORD=${AIRFLOW_DB_PASSWORD}
+      - PGPASSWORD=${AIRFLOW_DB_PASSWORD}
+      - PGDATA=/bitnami/postgresql/data
+    networks:
+      - network
+    command: postgres -c 'max_connections=9000'
+    restart: always
+  airflow-redis:
+    image: 'bitnami/redis:5.0.5'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - airflow:/bitnami
+    networks:
+      - network
+    restart: always
+  airflow-worker:
+    volumes:
+      - airflow:/bitnami
+      - ../dags:/opt/bitnami/airflow/dags
+      - ./airflow_plugins:/opt/bitnami/airflow/plugins
+      - ../logs/:/opt/bitnami/airflow/logs:rw
+    env_file:
+      - ../.env
+    expose:
+      - 8793
+    environment:
+      - AIRFLOW_WEBSERVER_PORT_NUMBER=8001
+      - AIRFLOW_FERNET_KEY=${AIRFLOW_FERNET_KEY}
+      - AIRFLOW_EXECUTOR=CeleryExecutor
+      - AIRFLOW_DATABASE_NAME=${AIRFLOW_DB_NAME}
+      - AIRFLOW_DATABASE_USERNAME=${AIRFLOW_DB_USER}
+      - AIRFLOW_DATABASE_PASSWORD=${AIRFLOW_DB_PASSWORD}
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@airflow-postgresql:5432/${AIRFLOW_DB_NAME}
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@airflow-postgresql:5432/${AIRFLOW_DB_NAME}
+      - AIRFLOW_DATABASE_HOST=airflow-postgresql
+      - REDIS_HOST=airflow-redis
+      - SENTRY_DSN=${SENTRY_DSN}
+      - AIRFLOW_DATABASE_PORT_NUMBER=5432
+      - AIRFLOW__CELERY__BROKER_URL=redis://:@airflow-redis:6379/1
+    networks:
+      - network
+    depends_on:
+      - airflow-redis
+      - airflow-postgresql
+    restart: always
+  splash:
+    image: "scrapinghub/splash:3.5"
+    command: --max-timeout 180 --slots 30 --maxrss 5000
+    expose:
+      - 8050
+    networks:
+      - network
+    restart: always
+  airflow-scheduler:
+    image: "bitnami/airflow-scheduler:1.10.5"
+    environment:
+      - AIRFLOW_WEBSERVER_PORT_NUMBER=8001
+      - AIRFLOW_FERNET_KEY=${AIRFLOW_FERNET_KEY}
+      - AIRFLOW_EXECUTOR=CeleryExecutor
+      - AIRFLOW_DATABASE_NAME=${AIRFLOW_DB_NAME}
+      - AIRFLOW_DATABASE_USERNAME=${AIRFLOW_DB_USER}
+      - AIRFLOW_DATABASE_PASSWORD=${AIRFLOW_DB_PASSWORD}
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@airflow-postgresql:5432/${AIRFLOW_DB_NAME}
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@airflow-postgresql:5432/${AIRFLOW_DB_NAME}
+      - AIRFLOW_LOAD_EXAMPLES=no
+      - AIRFLOW_DATABASE_HOST=airflow-postgresql
+      - REDIS_HOST=airflow-redis
+      - AIRFLOW_DATABASE_PORT_NUMBER=5432
+      - AIRFLOW__CELERY__BROKER_URL=redis://:@airflow-redis:6379/1
+    volumes:
+      - airflow:/bitnami
+      - ../dags:/opt/bitnami/airflow/dags
+      - ./airflow_plugins:/opt/bitnami/airflow/plugins
+      - ../logs/:/opt/bitnami/airflow/logs:rw
+    networks:
+      - network
+    depends_on:
+      - airflow-redis
+      - airflow-postgresql
+    restart: always
+  airflow:
+    image: "bitnami/airflow:1.10.5"
+    environment:
+      - AIRFLOW_WEBSERVER_PORT_NUMBER=8001
+      - AIRFLOW_FERNET_KEY=${AIRFLOW_FERNET_KEY}
+      - AIRFLOW_EXECUTOR=CeleryExecutor
+      - AIRFLOW_DATABASE_NAME=${AIRFLOW_DB_NAME}
+      - AIRFLOW_DATABASE_USERNAME=${AIRFLOW_DB_USER}
+      - AIRFLOW_DATABASE_PASSWORD=${AIRFLOW_DB_PASSWORD}
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@airflow-postgresql:5432/${AIRFLOW_DB_NAME}
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@airflow-postgresql:5432/${AIRFLOW_DB_NAME}
+      - AIRFLOW_PASSWORD=${AIRFLOW_PASSWORD}
+      - AIRFLOW_USERNAME=${AIRFLOW_USER}
+      - AIRFLOW_EMAIL=${AIRFLOW_EMAIL}
+      - AIRFLOW_DATABASE_HOST=airflow-postgresql
+      - REDIS_HOST=airflow-redis
+      - AIRFLOW__SMTP__SMTP_HOST=${AIRFLOW_SMTP_HOST}
+      - AIRFLOW__SMTP__SMTP_PORT=${AIRFLOW_SMTP_PORT}
+      - AIRFLOW__SMTP__SMTP_USER=${AIRFLOW_SMTP_USER}
+      - AIRFLOW__SMTP__SMTP_PASSWORD=${AIRFLOW_SMTP_PASSWORD}
+      - AIRFLOW_DATABASE_PORT_NUMBER=5432
+      - AIRFLOW__CELERY__BROKER_URL=redis://:@airflow-redis:6379/1
+    volumes:
+      - airflow:/bitnami
+      - ../dags:/opt/bitnami/airflow/dags
+      - ./airflow_plugins:/opt/bitnami/airflow/plugins
+      - ../logs/:/opt/bitnami/airflow/logs
+    networks:
+      - network
+    depends_on:
+      - airflow-redis
+      - airflow-postgresql
+    restart: always
+
+volumes:
+  airflow:
+    driver: local
+  airflow-postgresql:
+    driver: local

@@ -1,0 +1,30 @@
+version: '3'
+services:
+  elasticsearch1:
+    image: "elasticsearch:${VERSION}"
+    expose:
+      - 9200
+      - 9300
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ../es_backup:/backup
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./es_backup.sh:/es_backup.sh
+    environment:
+      - cluster.name="elk-nlpmonitor-cluster"
+      - network.host=0.0.0.0
+      - discovery.type=single-node
+      - discovery.zen.minimum_master_nodes=1
+      - ES_JAVA_OPTS=-Xmx512m -Xms512m
+    networks:
+      - network
+    restart: always
+
+  kibana:
+    environment:
+      - SERVER_REWRITEBASEPATH=true
+      - SERVER_BASEPATH=${KIBANA_PRIVATE_PATH}
+
+volumes:
+  elasticsearch_data:
+    driver: local

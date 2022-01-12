@@ -1,0 +1,2 @@
+Delete redis keys by pattern
+redis-cli --scan --pattern '*widget*' | xargs redis-cli del

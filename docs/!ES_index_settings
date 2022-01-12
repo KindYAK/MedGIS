@@ -1,0 +1,45 @@
+If index.max_result_window error occurs (maximum number of documents in one request), change index.max_result_window in your index settings through Kibana (5601)
+
+Q: I want to turn off index on certain fields
+A:
+1) You must specify this on mapping, as the default behavior of the elastic is to index as much as he can
+2) You must specify this it in `dynamic mapping`. When dynamic mapping is on creation time, you can easily modify it.
+Via type, field_name, path_name.
+Example:
+{
+    "not_indexed_long": {
+        "match_mapping_type": "long",
+        "mapping": {
+            "type": "long",
+            "index": False
+        }
+    }
+}  -> all long values would not index in elastic
+
+more info: https://www.elastic.co/guide/en/elasticsearch/reference/current/dynamic-templates.html
+
+Q: I get max_buckets error when aggregating stuff like unique dictionary values
+A:
+docker-compose exec elasticsearch bash
+
+curl -X PUT "localhost:9200/_cluster/settings?pretty" -H 'Content-Type: application/json' -d'
+{
+    "persistent" : {
+        "search.max_buckets": 5000000
+    }
+}
+'
+
+Q: [FORBIDDEN/12/index read-only / allow delete (api)] error when pushing to ES
+A:
+curl -X PUT "localhost:9200/_cluster/settings" -H 'Content-Type: application/json' -d'
+{
+  "transient": {
+    "cluster.routing.allocation.disk.watermark.low": "30mb",
+    "cluster.routing.allocation.disk.watermark.high": "20mb",
+    "cluster.routing.allocation.disk.watermark.flood_stage": "10mb",
+    "cluster.info.update.interval": "1m"
+  }
+}
+'
+curl -XPUT -H "Content-Type: application/json" http://localhost:9200/_all/_settings -d '{"index.blocks.read_only_allow_delete": null}'

@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% load staticfiles %}
+{% load cache %}
+{% load request_get_list %}
+{% load l10n %}
+{% load serializers %}
+
+{% block title %}Поиск{% endblock %}
+{% block heading %}Поиск{% endblock %}
+
+{% block head %}
+    <!-- data tables -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/datatables-bs4/css/dataTables.bootstrap4.css' %}">
+    <!-- Plotyly.js -->
+    <script src="{% static 'js_vendor/plotly-1.48.3.min.js' %}"></script>
+    <!-- Chroma.js -->
+    <script src="{% static 'js_vendor/chroma.min.js' %}"></script>
+    <style>
+        .row {
+            margin-bottom: 15px;
+        }
+        .form-group-intervals .row {
+            margin-bottom: 0;
+        }
+        .col-lg-2 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .form-group {
+            margin-bottom: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block bc %}
+    <li class="breadcrumb-item"><a href="/">MedGIS</a></li>
+    <li class="breadcrumb-item active">Поиск</li>
+{% endblock %}
+
+{% block content %}
+<form action="" method="GET">
+    {# Поиск #}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Поиск и фильтры</h3>
+                </div>
+                <div class="card-body" style="padding-bottom: 0;">
+                    <div id="search-form">
+                        <div class="row">
+                            <div class="col-md-1"></div>
+                            <div class="col-md-5">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-md-4">{{ form.corpuses.label_tag }}</div>
+                                                <div class="col-md-8">{% render_field form.corpuses data-placeholder="Выберите корпусы"  class="form-control select2 select2-multi" multiple="multiple" %}</div>
+                                            </div>
+                                            {% if not form.corpuses.value %}
+                                                <script>
+                                                    $('#id_corpuses').val([$("#id_corpuses option:first").val()]);
+                                                </script>
+                                            {% endif %}
+                                            <div class="row">
+                                                <div class="col-md-4">{{ form.sources.label_tag }}</div>
+                                                <div class="col-md-8">{% render_field form.sources data-placeholder="Выберите источники"  class="form-control select2 select2-multi" multiple="multiple" %}</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4">{{ form.authors.label_tag }}</div>
+                                                <div class="col-md-8">{% render_field form.authors data-placeholder="Выберите авторов"  class="form-control select2 select2-multi" multiple="multiple" %}</div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-md-4">{{ form.title.label_tag }}</div>
+                                                <div class="col-md-8">{% render_field form.title placeholder="Заголовок" class="form-control" %}</div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4">{{ form.text.label_tag }}</div>
+                                                <div class="col-md-8">{% render_field form.text placeholder="Текст" class="form-control" %}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-1"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn-block btn-info" type="submit">Поиск</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {# Управление графиками #}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Графики - опции</h3>
+                </div>
+                <div class="card-body">
+                    <div id="plotsMenu">
+                        <div class="row">
+                            <div class="col-lg-3"></div>
+                            <div class="col-lg-2">
+                                <div class="form-group">
+                                    <label for="granularity">Гранулярность</label>
+                                    <select class="custom-select" name="granularity" id="granularity">
+                                        <option value="1d">1 День</option>
+                                        <option value="1w">1 Неделя</option>
+                                        <option value="1M">1 Месяц</option>
+                                        <option value="1q">3 Месяца</option>
+                                        <option value="1y">1 Год</option>
+                                    </select>
+                                </div>
+                                <script>
+                                    $('#granularity').val('{{ granularity }}');
+                                </script>
+                            </div>
+                            <div class="col-lg-2">
+                                <div class="form-group">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" name="smooth" id="smoothSwitch">
+                                        <label class="custom-control-label" for="smoothSwitch">Сглаживание</label>
+                                    </div>
+                                </div>
+                                <script>
+                                    $('#smoothSwitch').prop("checked", {% if smooth %}true{% else %}false{% endif %})
+                                </script>
+                            </div>
+                            <div class="col-lg-2">
+                                <div class="form-group">
+                                        <button type="submit" class="btn btn-default float-right">Применить</button>
+                                </div>
+                            </div>
+                            <div class="col-lg-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+    {% cache 28800 search_page request.GET %}
+    {# Графики #}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Динамика публикаций</h3>
+                </div>
+                <div class="card-body">
+                    <div id="dynamic-plots">
+                        {# Абсолютная мощность #}
+                        <div id="dynamics" class="dynamics-plot"></div>
+                        <script>
+                            var selectorOptions = {
+                                buttons: [{
+                                    step: 'month',
+                                    stepmode: 'backward',
+                                    count: 1,
+                                    label: '1m'
+                                }, {
+                                    step: 'month',
+                                    stepmode: 'backward',
+                                    count: 6,
+                                    label: '6m'
+                                }, {
+                                    step: 'year',
+                                    stepmode: 'todate',
+                                    count: 1,
+                                    label: 'YTD'
+                                }, {
+                                    step: 'year',
+                                    stepmode: 'backward',
+                                    count: 1,
+                                    label: '1y'
+                                }, {
+                                    step: 'all',
+                                }],
+                            };
+
+                            var data = [
+                                {
+                                    mode: 'lines',
+                                    x: [{% for tick in date_ticks %}new Date('{{ tick }}'), {% endfor %}],
+                                    y: [{% for tick in absolute_power %}{{ tick|round_fl:0|safe }}, {% endfor %}],
+                                    name: 'Абсолютная мощность выборки',
+                                    fill: 'tozeroy',
+{#                                    {% if smooth %}#}
+{#                                    line: {shape: 'spline'},#}
+{#                                    smoothing: 0.5#}
+{#                                    {% endif %}#}
+                                },
+                            ];
+                            var layout = {
+                                title: 'Абсолютная мощность выборки',
+                                xaxis: {
+                                    rangeselector: selectorOptions,
+                                    rangeslider: {},
+                                    fixedrange: true
+                                },
+                                yaxis: {
+                                    fixedrange: true
+                                }
+                            };
+                            Plotly.plot('dynamics', data, layout, {responsive: true});
+                        </script>
+
+                        {# Относительная мощность #}
+                        <div id="dynamics_normal" class="dynamics-plot"></div>
+                        <script>
+                            var data = [
+                                {
+                                    mode: 'lines',
+                                    x: [{% for tick in date_ticks %}new Date('{{ tick }}'), {% endfor %}],
+                                    y: [{% for tick in relative_power %}{{ tick|round_fl:5|safe }}, {% endfor %}],
+                                    name: 'Относительная мощность выборки',
+                                    fill: 'tozeroy',
+{#                                    {% if smooth %}#}
+{#                                    line: {shape: 'spline'},#}
+{#                                    smoothing: 0.5#}
+{#                                    {% endif %}#}
+                                },
+                            ];
+                            var layout = {
+                                title: 'Относительная мощность выборки',
+                                xaxis: {
+                                    rangeselector: selectorOptions,
+                                    rangeslider: {},
+                                    fixedrange: true
+                                },
+                                yaxis: {
+                                    fixedrange: true
+                                }
+                            };
+                            Plotly.plot('dynamics_normal', data, layout, {responsive: true});
+                        </script>
+
+                        {# Относительный удельный вес #}
+                        <div id="dynamics_weight" class="dynamics-plot"></div>
+                        <script>
+                            var data = [
+                                {
+                                    mode: 'lines',
+                                    x: [{% for tick in date_ticks %}new Date('{{ tick }}'), {% endfor %}],
+                                    y: [{% for tick in relative_weight %}{{ tick|round_fl:5|safe }}, {% endfor %}],
+                                    name: 'Удельный вес выборки',
+                                    fill: 'tozeroy',
+{#                                    {% if smooth %}#}
+{#                                    line: {shape: 'spline'},#}
+{#                                    smoothing: 0.5#}
+{#                                    {% endif %}#}
+                                },
+                            ];
+                            var layout = {
+                                title: 'Удельный вес выборки',
+                                xaxis: {
+                                    rangeselector: selectorOptions,
+                                    rangeslider: {},
+                                    fixedrange: true
+                                },
+                                yaxis: {
+                                    fixedrange: true
+                                }
+                            };
+                            Plotly.plot('dynamics_weight', data, layout, {responsive: true});
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Результаты поиска #}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Результаты поиска - {{ total_found }}</h3>
+                </div>
+                <div class="card-body">
+                    <div id="search-results">
+                        <table id="search-results-table" class="table table-bordered table-hover">
+                            <thead>
+                            <tr role="row">
+                                <th>Релевантность</th>
+                                <th>Дата</th>
+                                <th>Заголовок</th>
+                                <th>Источник</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <script>
+                                var colorScale = chroma.scale(['#d3322b', '#fee42c', '#23964f']).mode('lch').domain([-0.5, 0.5]);
+                            </script>
+                            {% for document in documents %}
+                                <tr>
+                                    <td>{{ document.score|floatformat:3|unlocalize }}</td>
+                                    <td>{{ document.datetime }}</td>
+                                    <td>{{ document.title }}</td>
+                                    <td>{{ document.source }}</td>
+                                    <td>
+                                        <a href="{% url 'massmedia:document_view' document.id %}" class="nav-link">
+                                            <i class="nav-icon fas fa-eye nowrap" style="font-size: 36px;"
+                                            data-toggle="tooltip" data-placement="top" title="Просмотреть новость"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <script>
+                                    $('#sentiment_{{ document.id }}').css('background-color', colorScale({{ document.sentiment|safe }}));
+                                </script>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endcache %}
+{% endblock %}
+
+{% block foot %}
+    <!-- DataTables -->
+    <script src="{% static 'adminlte/plugins/datatables/jquery.dataTables.js' %}"></script>
+    <script src="{% static 'adminlte/plugins/datatables-bs4/js/dataTables.bootstrap4.js' %}"></script>
+    <!-- InputMask -->
+    <script src="{% static 'adminlte/plugins/inputmask/jquery.inputmask.bundle.js' %}"></script>
+    <script src="{% static 'adminlte/plugins/moment/moment.min.js' %}"></script>
+
+    <!-- Range select -->
+    <script src="{% static 'js/range_plots_management.js' %}"></script>
+    <script>
+        run_range_plot_management('{{ view.kwargs.topic_modelling }}',
+                                   {% if 'topic_name' in view.kwargs %}'["{{ view.kwargs.topic_name }}"]'{% else %}'{{ request.GET.topics|safe }}'{% endif %},
+                                  '{{ csrf_token }}', false, "search",
+                                   {
+                                        "sources": "{{ request.GET|get_item:'sources'|safe }}",
+                                        {% if request.GET|get_item:'corpuses' %}
+                                            "corpuses": "{{ request.GET|get_item:'corpuses'|safe }}",
+                                        {% else %}
+                                            "corpuses": "['" + $("#id_corpuses option:first").val() + "']",
+                                        {% endif %}
+                                        "authors": "{{ request.GET|get_item:'authors'|safe }}",
+                                        "title": '{{ request.GET.title }}',
+                                        "text": '{{ request.GET.text }}',
+                                   }
+        );
+    </script>
+{% endblock %}

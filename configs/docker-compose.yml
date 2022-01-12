@@ -1,0 +1,78 @@
+version: '3'
+
+services:
+  web:
+    env_file:
+      - ../.env
+    expose:
+      - 8000
+    depends_on:
+      - db
+      - redis
+      - elasticsearch1
+    networks:
+      - network
+    restart: always
+  nginx:
+    image: "nginx:1.17.0"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9501:9501"
+      - "9502:9502"
+      - "9503:9503"
+    volumes:
+      - static_root:/static_root
+      - media_root:/media_root
+      - ./htpasswd:/etc/nginx/.htpasswd
+    depends_on:
+      - web
+    networks:
+      - network
+    restart: always
+  db:
+    image: "postgres:11.4"
+    expose:
+      - 5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../db_backup:/backup
+      - ./db_backup.sh:/bin/db_backup.sh
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - PGPASSWORD=${DB_PASSWORD}
+    networks:
+      - network
+    command: postgres -c 'max_connections=9000'
+    restart: always
+  redis:
+    image: "redis:5.0.5"
+    networks:
+      - network
+    expose:
+      - 6379
+    restart: always
+  orca:
+    image: "quay.io/plotly/orca"
+    networks:
+      - network
+    expose:
+      - 9091
+
+volumes:
+  django_root:
+    driver: local
+  pgdata:
+    driver: local
+  redis:
+    driver: local
+  media_root:
+    driver: local
+  static_root:
+    driver: local
+
+networks:
+  network:
+    driver: bridge

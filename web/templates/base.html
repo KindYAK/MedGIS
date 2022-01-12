@@ -1,0 +1,323 @@
+{% load staticfiles %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>MedGIS - {% block title %}{% endblock %}</title>
+
+    <!-- Yandex.Metrika counter --> <script type="text/javascript" > (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)}; m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)}) (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym"); ym(56001304, "init", { clickmap:true, trackLinks:true, accurateTrackBounce:true, webvisor:true }); </script> <noscript><div><img src="https://mc.yandex.ru/watch/56001304" style="position:absolute; left:-9999px;" alt="" /></div></noscript> <!-- /Yandex.Metrika counter -->
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-151197353-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-151197353-1');
+    </script>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/png" href="{% static 'img/favicon.jpg' %}"/>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
+    <!-- Google Font: Source Sans Pro -->
+    <link href="{% static 'css/google-fonts.css' %}" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'css/fontawesome-5.8.2.css' %}">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="{% static 'css/ionicons-2.0.1.min.css' %}">
+    <!-- My custom styles -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <!-- Select2 -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/select2/css/select2.min.css' %}">
+    <!-- jQuery -->
+    <script src="{% static 'adminlte/plugins/jquery/jquery.min.js' %}"></script>
+    <style>
+        .select2-container {
+            height: 38px;
+        }
+        .select2-selection {
+            height: 100% !important;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+
+<body class="hold-transition sidebar-mini sidebar-collapse layout-fixed">
+<div class="wrapper">
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light border-bottom">
+        <!-- Left navbar links -->
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="/" class="nav-link">Главная</a>
+            </li>
+            <li class="nav-item d-none d-sm-inline-block">
+                <a href="#" class="nav-link">О нас</a>
+            </li>
+        </ul>
+
+        <!-- Right navbar links -->
+        <ul class="navbar-nav ml-auto">
+            <!-- Notifications Dropdown Menu -->
+            {% if request.user.is_authenticated %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link" data-toggle="dropdown" href="#">
+                        <i class="far fa-bell"></i>
+                        <span class="badge badge-warning navbar-badge">0</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                        <span class="dropdown-header">0 уведомлений</span>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item dropdown-footer">Все уведомления</a>
+                    </div>
+                </li>
+            {% endif %}
+            <li class="nav-item">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'massmedia:logout' %}">
+                        <button class="btn btn-block btn-info btn-sm">Выйти ({{ request.user.username }})</button>
+                    </a>
+                {% else %}
+                    <a href="{% url 'massmedia:login' %}">
+                        <button class="btn btn-block btn-info btn-sm">Войти</button>
+                    </a>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+    <!-- /.navbar -->
+
+    <!-- Main Sidebar Container -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <!-- Brand Logo -->
+        <a href="/" class="brand-link">
+            <span style="margin-left: 1.2rem;" class="fas fa-file-medical-alt"></span>
+            <span class="brand-text font-weight-light">MedGIS</span>
+        </a>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Sidebar user panel (optional) -->
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div style="margin-left: 0.6rem;" class="info">
+                    <a href="#" class="d-block">
+                        {% if request.user.is_authenticated %}
+                            <i class="fas fa-user"></i> {{ request.user.username }}
+                        {% else %}
+                            Вы не авторизованы
+                            <a href="{% url 'massmedia:login' %}">
+                                <button class="btn btn-block btn-info btn-sm">Войти</button>
+                            </a>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sidebar Menu -->
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
+                    data-accordion="false">
+                    {% if request.user.is_authenticated %}
+                        {% if request.user.is_superuser or request.user.viewer or request.user.expert %}
+                            {% if dashboards.count > 0 %}
+                                <li class="nav-item has-treeview {% if request.resolver_match.url_name != "dashboard" %}menu-close{% else %}menu-open{% endif %}">
+                                    <a href="#" class="nav-link {% if request.resolver_match.url_name == "dashboard" %}active{% endif %}">
+                                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                                        <p>
+                                            Дашборд
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        {% for dashboard in dashboards %}
+                                            <li class="nav-item">
+                                                <a href="{% url 'dashboard:dashboard' dashboard.id %}" class="nav-link {% if request.resolver_match.url_name == "dashboard" and dashboard.id == dashboard_template.id %}active{% endif %}">
+                                                    <i class="far fa-circle nav-icon"></i>
+                                                    <p>{{ dashboard.name }}</p>
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% endif %}
+                            <li class="nav-item">
+                                <a href="{% url 'evaluation:criterion_eval_analysis' %}" class="nav-link {% if request.resolver_match.url_name == "criterion_eval_analysis" %}active{% endif %}">
+                                    <i class="nav-icon fas fa-drafting-compass"></i>
+                                    <p>
+                                        Аналитика
+                                    </p>
+                                </a>
+                            </li>
+                            {% if request.user.is_superuser %}
+                                <li class="nav-item">
+                                    <a href="{% url 'topicmodelling:dynamic_tm' %}" class="nav-link {% if request.resolver_match.url_name == "dynamic_tm" %}active{% endif %}">
+                                        <i class="nav-icon fas fa-chart-line"></i>
+                                        <p>
+                                            Динамика
+                                        </p>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <li class="nav-item has-treeview {% if "/topicmodelling/" not in request.get_full_path %}menu-close{% else %}menu-open{% endif %}">
+                                <a href="#" class="nav-link {% if "/topicmodelling/" in request.get_full_path %}active{% endif %}">
+                                    <i class="nav-icon fas fa-tags"></i>
+                                    <p>
+                                        Тематические модели
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{% url 'topicmodelling:topics_list' %}" class="nav-link {% if request.resolver_match.url_name == "topics_list" %}active{% endif %}">
+                                            <i class="far fa-circle nav-icon"></i>
+                                            <p>Темы</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'topicmodelling:topics_combo_list' %}" class="nav-link {% if request.resolver_match.url_name == "topics_combo_list" %}active{% endif %}">
+                                            <i class="far fa-circle nav-icon"></i>
+                                            <p>Сочетания</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'massmedia:search' %}" class="nav-link {% if request.resolver_match.url_name == "search" %}active{% endif %}">
+                                    <i class="nav-icon fas fa-search-plus"></i>
+                                    <p>
+                                        Поиск
+                                    </p>
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% if request.user.contentloader %}
+                            <li class="nav-item">
+                                <a href="{% url 'massmedia:document_list' %}" class="nav-link {% if request.resolver_match.url_name == "document_list" %}active{% endif %}">
+                                    <i class="nav-icon far fa-list-alt"></i>
+                                    <p>
+                                        Мои публикации
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'massmedia:document_create' %}" class="nav-link {% if request.resolver_match.url_name == "document_create" %}active{% endif %}">
+                                    <i class="nav-icon fas fa-file-import"></i>
+                                    <p>
+                                        Добавить публикацию
+                                    </p>
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+            </nav>
+            <!-- /.sidebar-menu -->
+        </div>
+        <!-- /.sidebar -->
+    </aside>
+
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0 text-dark">{% block heading %}{% endblock %}</h1>
+                    </div><!-- /.col -->
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            {% block bc %}{% endblock %}
+                        </ol>
+                    </div><!-- /.col -->
+                </div><!-- /.row -->
+            </div><!-- /.container-fluid -->
+        </div>
+        <!-- /.content-header -->
+
+        <!-- Main content -->
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+
+    <!-- Main Footer -->
+    <footer class="main-footer">
+        <!-- To the right -->
+        <div class="float-right d-none d-sm-inline"></div>
+        <!-- Default to the left -->
+        <strong>
+            &copy; 2020 <a href="http://iict.kz">РГП на ПХВ ИИВТ МОН РК</a>.</strong> Все права защищены
+    </footer>
+</div>
+<!-- ./wrapper -->
+
+<!-- REQUIRED SCRIPTS -->
+<!-- Bootstrap 4 -->
+<script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<!-- AdminLTE App -->
+<script src="{% static 'adminlte/dist/js/adminlte.min.js' %}"></script>
+<!-- FastClick -->
+<script src="{% static 'adminlte/plugins/fastclick/fastclick.js' %}"></script>
+<!-- Select2 -->
+<script src="{% static 'adminlte/plugins/select2/js/select2.full.min.js' %}"></script>
+<script>
+    $('.select2-multi').select2({
+        closeOnSelect: false,
+    });
+    $('.select2-single').select2({
+        closeOnSelect: true,
+    });
+</script>
+<script>
+    $('i').tooltip();
+</script>
+<script>
+    var lastWidth = $(window).width();
+
+    function debounce(func, wait, immediate) {
+        var timeout;
+        return function () {
+            var context = this, args = arguments;
+            var later = function () {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
+            };
+            var callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
+        };
+    };
+
+    var debounced_select_redraw = debounce(function () {
+        $('.select2-multi').select2({
+            closeOnSelect: false,
+        });
+        $('.select2-single').select2({
+            closeOnSelect: true,
+        });
+    }, 100);
+
+    $(window).resize(function () {
+        if ($(window).width() !== lastWidth) {
+            debounced_select_redraw();
+            lastWidth = $(window).width();
+        }
+    });
+</script>
+{% block foot %}{% endblock %}
+</body>
+</html>
