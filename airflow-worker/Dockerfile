@@ -53,8 +53,8 @@ RUN python -m textblob.download_corpora
 RUN python -m nltk.downloader stopwords
 RUN mkdir /.local && chmod 775 /.local
 
-#COPY bigartm /bigartm/
-#RUN pip install /bigartm/bigartm-0.10.0-cp36-cp36m-linux_x86_64.whl
+COPY bigartm /bigartm/
+RUN pip install /bigartm/bigartm-0.10.0-cp38-cp38-linux_x86_64.whl
 
 COPY requirements.txt /requirements.txt
 RUN pip install --ignore-installed -r /requirements.txt
