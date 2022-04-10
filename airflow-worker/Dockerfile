@@ -1,68 +1,66 @@
-FROM bitnami/minideb-extras:stretch-r484
+FROM docker.io/bitnami/minideb:buster
 LABEL maintainer "Bitnami <containers@bitnami.com>"
 
-ENV BITNAMI_PKG_CHMOD="-R g+rwX" \
-    BITNAMI_PKG_EXTRA_DIRS="/opt/bitnami/airflow/dags" \
-    HOME="/"
+ENV BITNAMI_PKG_EXTRA_DIRS="/opt/bitnami/airflow/dags" \
+    HOME="/" \
+    OS_ARCH="amd64" \
+    OS_FLAVOUR="debian-10" \
+    OS_NAME="linux"
 
+COPY prebuildfs /
 # Install required system packages and dependencies
-RUN install_packages libbsd0 libbz2-1.0 libc6 libcomerr2 libedit2 libffi6 libgcc1 libgssapi-krb5-2 libicu57 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 liblzma5 libmariadbclient18 libncurses5 libnss-wrapper libreadline7 libsasl2-2 libsqlite3-0 libssl1.1 libstdc++6 libtinfo5 libuuid1 libxml2 libxslt1.1 zlib1g
-RUN bitnami-pkg install python-3.6.9-1 --checksum 16bf895318d5581937b3b5e73b55d7c7180a8ef42af8d0a8d4dd010bd0a0408d
-RUN bitnami-pkg install postgresql-client-10.10.0-1 --checksum 77f89198ede517c8355f466642643cc787989b16bd136c0efcfea0a2d21282cb
-RUN bitnami-pkg unpack airflow-worker-1.10.5-1 --checksum 078ee3a40c6e2d42bcef0c75eee66acb26902be3651aa2d05009452c82b3859a
-RUN install_packages python3-dev python3-setuptools build-essential postgresql-server-dev-all libpq-dev gcc libboost-all-dev
+RUN install_packages acl ca-certificates curl gzip libbsd0 libbz2-1.0 libc6 libcom-err2 libcurl4 libedit2 libffi6 libgcc1 libgcrypt20 libgmp10 libgnutls30 libgpg-error0 libgssapi-krb5-2 libhogweed4 libicu63 libidn2-0 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap-2.4-2 liblzma5 libmariadb3 libncursesw6 libnettle6 libnghttp2-14 libp11-kit0 libpsl5 libreadline7 librtmp1 libsasl2-2 libsqlite3-0 libssh2-1 libssl1.1 libstdc++6 libtasn1-6 libtinfo6 libunistring2 libuuid1 libxml2 libxslt1.1 locales netbase procps tar zlib1g
+RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "wait-for-port" "1.0.1-10" --checksum 35c818ba3f4b5aae905959bc7d3a5e81fc63786e3c662b604612c0aa7fcda8fd
+RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "python" "3.8.13-2" --checksum 704fe6b545280ae027303b4ec875b495ee6da2256b3d8f877467077b0f031a60
+RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "postgresql-client" "10.20.0-5" --checksum efc2ccb03c4f0998d86e688d488e45aa534f27e317b253e7fcf037b7c78b7469
+RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "ini-file" "1.4.1-7" --checksum 7a4f45cbebd2e242278060415dd1a3f0dbe68991fdcaea5bb311e8de54a3e027
+RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "git" "2.35.1-6" --checksum 75c0294b7af868721549926139e6ddbec9548fbd0e69c7e199d640a4531d858b
+RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "gosu" "1.14.0-7" --checksum d6280b6f647a62bf6edc74dc8e526bfff63ddd8067dcb8540843f47203d9ccf1
+RUN . /opt/bitnami/scripts/libcomponent.sh && component_unpack "airflow" "2.2.5-0" --checksum d491bf466114349de0d3e90760ad8bb995e0c633573814a613e41c4b0ef21a5e
+RUN apt-get update && apt-get upgrade -y && \
+    rm -r /var/lib/apt/lists /var/cache/apt/archives
+RUN chmod g+rwX /opt/bitnami
+RUN localedef -c -f UTF-8 -i en_US en_US.UTF-8
+RUN update-locale LANG=C.UTF-8 LC_MESSAGES=POSIX && \
+    DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales
+RUN echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen && locale-gen
 
 COPY rootfs /
-ENV AIRFLOW_DATABASE_HOST="postgresql" \
-    AIRFLOW_DATABASE_NAME="bitnami_airflow" \
-    AIRFLOW_DATABASE_PASSWORD="bitnami1" \
-    AIRFLOW_DATABASE_PORT_NUMBER="5432" \
-    AIRFLOW_DATABASE_USERNAME="bn_airflow" \
-    AIRFLOW_DATABASE_USE_SSL="no" \
-    AIRFLOW_EXECUTOR="SequentialExecutor" \
-    AIRFLOW_FERNET_KEY="" \
-    AIRFLOW_HOME="/opt/bitnami/airflow" \
-    AIRFLOW_HOSTNAME_CALLABLE="" \
-    AIRFLOW_REDIS_USE_SSL="no" \
-    AIRFLOW_WEBSERVER_HOST="airflow" \
-    AIRFLOW_WEBSERVER_PORT_NUMBER="8080" \
-    AIRFLOW_WORKER_PORT_NUMBER="8793" \
-    BITNAMI_APP_NAME="airflow-worker" \
-    BITNAMI_IMAGE_VERSION="1.10.5-debian-9-r20" \
-    C_FORCE_ROOT="True" \
-    LD_LIBRARY_PATH="/opt/bitnami/python/lib/:/opt/bitnami/airflow/venv/lib/python3.6/site-packages/numpy/.libs/:$LD_LIBRARY_PATH" \
-    LD_PRELOAD="/usr/lib/libnss_wrapper.so" \
+RUN /opt/bitnami/scripts/airflow/postunpack.sh
+RUN /opt/bitnami/scripts/locales/add-extra-locales.sh
+ENV AIRFLOW_HOME="/opt/bitnami/airflow" \
+    APP_VERSION="2.2.5" \
+    BITNAMI_APP_NAME="airflow" \
+    LANG="en_US.UTF-8" \
+    LANGUAGE="en_US:en" \
+    LD_LIBRARY_PATH="/opt/bitnami/python/lib/:/opt/bitnami/airflow/venv/lib/python3.8/site-packages/numpy.libs/:$LD_LIBRARY_PATH" \
+    LIBNSS_WRAPPER_PATH="/opt/bitnami/common/lib/libnss_wrapper.so" \
     LNAME="airflow" \
-    NAMI_PREFIX="/.nami" \
     NSS_WRAPPER_GROUP="/opt/bitnami/airflow/nss_group" \
     NSS_WRAPPER_PASSWD="/opt/bitnami/airflow/nss_passwd" \
-    PATH="/opt/bitnami/python/bin:/opt/bitnami/postgresql/bin:/opt/bitnami/airflow-worker/bin:/opt/bitnami/airflow/venv/bin:$PATH" \
-    REDIS_HOST="redis" \
-    REDIS_PASSWORD="" \
-    REDIS_PORT_NUMBER="6379" \
-    REDIS_USER="" \
+    PATH="/opt/bitnami/common/bin:/opt/bitnami/python/bin:/opt/bitnami/postgresql/bin:/opt/bitnami/git/bin:/opt/bitnami/airflow/venv/bin:$PATH" \
     ARTM_SHARED_LIBRARY=/bigartm/libartm.so
 
+RUN install_packages python3-dev python3-setuptools build-essential postgresql-server-dev-all libpq-dev gcc libboost-all-dev
 RUN pip install --upgrade pip
 RUN pip install --upgrade --ignore-installed setuptools
+RUN pip install --upgrade --ignore-installed Cython
 
-COPY requirements-base.txt /requirements-base.txt
+COPY ./requirements-base.txt  /requirements-base.txt
 RUN pip install -r /requirements-base.txt
 
-RUN pip install --ignore-installed tensorflow>=1.11.0
 RUN python -m textblob.download_corpora
 RUN python -m nltk.downloader stopwords
 RUN mkdir /.local && chmod 775 /.local
 
-COPY bigartm /bigartm/
-RUN pip install /bigartm/bigartm-0.10.0-cp36-cp36m-linux_x86_64.whl
+#COPY bigartm /bigartm/
+#RUN pip install /bigartm/bigartm-0.10.0-cp36-cp36m-linux_x86_64.whl
 
 COPY requirements.txt /requirements.txt
 RUN pip install --ignore-installed -r /requirements.txt
 
-EXPOSE 8793
+EXPOSE 8080
 
-WORKDIR /opt/bitnami/airflow/dags/
 USER 1001
-ENTRYPOINT [ "/app-entrypoint.sh" ]
-CMD [ "/run.sh" ]
+ENTRYPOINT [ "/opt/bitnami/scripts/airflow/entrypoint.sh" ]
+CMD [ "/opt/bitnami/scripts/airflow/run.sh" ]

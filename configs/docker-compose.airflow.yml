@@ -2,7 +2,7 @@ version: '3'
 
 services:
   airflow-postgresql:
-    image: "postgres:11.4"
+    image: "postgres:14.2-alpine3.15"
     volumes:
       - airflow-postgresql:/bitnami/postgresql
       - ../db_airflow_backup:/backup
@@ -18,7 +18,7 @@ services:
     command: postgres -c 'max_connections=9000'
     restart: always
   airflow-redis:
-    image: 'bitnami/redis:5.0.5'
+    image: 'bitnami/redis:6.2.6'
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     volumes:
@@ -35,7 +35,7 @@ services:
     env_file:
       - ../.env
     expose:
-      - 8793
+      - 8080
     environment:
       - AIRFLOW_WEBSERVER_PORT_NUMBER=8001
       - AIRFLOW_FERNET_KEY=${AIRFLOW_FERNET_KEY}
@@ -65,7 +65,7 @@ services:
       - network
     restart: always
   airflow-scheduler:
-    image: "bitnami/airflow-scheduler:1.10.5"
+    image: "bitnami/airflow-scheduler:2.2.5"
     environment:
       - AIRFLOW_WEBSERVER_PORT_NUMBER=8001
       - AIRFLOW_FERNET_KEY=${AIRFLOW_FERNET_KEY}
@@ -92,7 +92,7 @@ services:
       - airflow-postgresql
     restart: always
   airflow:
-    image: "bitnami/airflow:1.10.5"
+    image: "bitnami/airflow:2.2.5"
     environment:
       - AIRFLOW_WEBSERVER_PORT_NUMBER=8001
       - AIRFLOW_FERNET_KEY=${AIRFLOW_FERNET_KEY}
