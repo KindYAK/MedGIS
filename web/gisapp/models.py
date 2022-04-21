@@ -172,3 +172,101 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"Связь Больница-Расход {self.hospital} - {self.expenses_purpose} ({self.amount}тг.)"
+
+
+class MKBClass(models.Model):
+    name = models.CharField(max_length=500, verbose_name="Название")
+    code = models.CharField(max_length=9, verbose_name="Код")
+    level = models.PositiveSmallIntegerField(verbose_name="Уровень МКБ")
+    parent = models.ForeignKey('MKBClass', null=True, blank=True, on_delete=models.PROTECT)
+
+    class Meta:
+        verbose_name = "Класс МКБ"
+        verbose_name_plural = "Классы МКБ"
+        unique_together = ('name', 'code')
+
+    def __str__(self):
+        return f"Класс МКБ {self.name} ({self.code}) -{self.level}-"
+
+
+class PatientStay(models.Model):
+    rpnID = models.PositiveIntegerField(verbose_name="rpnID")
+
+    from_hospital = models.ForeignKey('Hospital', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Больница откуда направили", related_name="from_hospital")
+    hospital = models.ForeignKey('Hospital', on_delete=models.PROTECT, verbose_name="Больница")
+
+    birth_date = models.DateField(verbose_name="Дата рождения")
+    death_date = models.DateField(null=True, blank=True, verbose_name="Дата смерти")
+    age = models.PositiveSmallIntegerField(verbose_name="Возраст")
+
+    sex = models.PositiveSmallIntegerField(choices=(
+        (0, 'Мужской'),
+        (1, 'Женский')
+    ), verbose_name="Пол")
+    citizenship = models.ForeignKey('Citizenship', on_delete=models.PROTECT, verbose_name="Гражданство")
+    ethnicity = models.ForeignKey('Ethnicity', on_delete=models.PROTECT, verbose_name="Этнос")
+    countryside = models.PositiveSmallIntegerField(choices=(
+        (0, 'Город'),
+        (1, 'Село')
+    ), verbose_name="Село/Город")
+
+    mkb = models.ForeignKey('MKBClass', on_delete=models.PROTECT, verbose_name="Класс МКБ")
+    mkb_complication = models.ForeignKey('MKBClass', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Осложнение - Класс МКБ", related_name="mbk_complication")
+    surgery = models.ForeignKey('SurgeryType', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Тип операции")
+    surgery_date = models.DateField(null=True, blank=True, verbose_name="Дата операции")
+    admission_date = models.DateField(verbose_name="Дата поступления")
+    discharge_date = models.DateField(verbose_name="Дата выписки")
+    days_spent = models.PositiveSmallIntegerField(verbose_name="Проведено койко-дней")
+    amount_to_pay = models.FloatField(verbose_name="Предъявленная сумма к оплате")
+    funding_source = models.ForeignKey('FundingSource', verbose_name="Источник финансирования", on_delete=models.PROTECT)
+    is_planned = models.BooleanField(verbose_name="Планово")
+    is_urgent = models.BooleanField(verbose_name="Экстренно")
+    benefits = models.CharField(max_length=30, verbose_name="Льгота")
+
+    stay_result = models.PositiveSmallIntegerField(choices=(
+        (0, 'Выписан'),
+        (1, 'Переведен'),
+        (2, 'Самовольный уход'),
+        (3, 'Умер'),
+    ), verbose_name="Исход пребывания")
+    treatment_result = models.PositiveSmallIntegerField(choices=(
+        (0, 'Выздоровление'),
+        (1, 'Смерть'),
+        (2, 'Без перемен'),
+        (3, 'Ухудшение'),
+        (4, 'Улучшение'),
+    ), verbose_name="Исход лечения")
+
+
+class Citizenship(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+
+    class Meta:
+        verbose_name = "Гражданство"
+        verbose_name_plural = "Гражданства"
+
+    def __str__(self):
+        return f"Гражданство {self.name}"
+
+
+class Ethnicity(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+
+    class Meta:
+        verbose_name = "Этнос"
+        verbose_name_plural = "Этносы"
+
+    def __str__(self):
+        return f"Этнос {self.name}"
+
+
+class SurgeryType(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+    code = models.CharField(max_length=50, unique=True, verbose_name="Код")
+
+    class Meta:
+        verbose_name = "Операция"
+        verbose_name_plural = "Операции"
+
+    def __str__(self):
+        return f"Операция {self.name} ({self.code})"
