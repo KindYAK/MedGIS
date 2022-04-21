@@ -50,6 +50,12 @@ class Hospital(GeoObject):
     town = models.ForeignKey('Town', on_delete=models.PROTECT, verbose_name="Населённый пункт")
     name = models.CharField(max_length=50, unique=True, verbose_name="Название")
 
+    service_types = models.ManyToManyField('ServiceType', verbose_name="Типы услуг")
+    equipments = models.ManyToManyField('EquipmentType', verbose_name="Оборудование", through="EquipmentHospital")
+
+    fundings = models.ManyToManyField('FundingSource', verbose_name="Финансирование", through="Funding")
+    expenses = models.ManyToManyField('ExpensesPurpose', verbose_name="Расходы", through="Expense")
+
     address = models.CharField(max_length=250, verbose_name="Адрес")
 
     number_of_doctors_with_category = models.PositiveSmallIntegerField(verbose_name="Количество врачей с категорией")
@@ -80,3 +86,89 @@ class Hospital(GeoObject):
 
     def __str__(self):
         return f"Больница {self.name} в {self.town}"
+
+
+class ServiceType(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Тип услуги")
+
+    class Meta:
+        verbose_name = "Тип услуги"
+        verbose_name_plural = "Типы услуг"
+
+    def __str__(self):
+        return f"Тип услуги {self.name}"
+
+
+class EquipmentType(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Тип оборудования")
+
+    class Meta:
+        verbose_name = "Тип оборудования"
+        verbose_name_plural = "Типы оборудования"
+
+    def __str__(self):
+        return f"Тип оборудования {self.name}"
+
+
+class EquipmentHospital(models.Model):
+    equipment = models.ForeignKey("EquipmentType", verbose_name="Оборудование", on_delete=models.PROTECT)
+    hospital = models.ForeignKey("Hospital", verbose_name="Больница", on_delete=models.PROTECT)
+    quantity = models.PositiveSmallIntegerField(verbose_name="Количество")
+
+    class Meta:
+        verbose_name = "Связь Больница-Оборудование"
+        verbose_name_plural = "Связи Больница-Оборудование"
+        unique_together = ('equipment', 'hospital')
+
+    def __str__(self):
+        return f"Связь Больница-Оборудование {self.hospital} - {self.equipment} ({self.quantity}шт.)"
+
+
+class FundingSource(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Название")
+
+    class Meta:
+        verbose_name = "Источник финансирования"
+        verbose_name_plural = "Источники финансирования"
+
+    def __str__(self):
+        return f"Источник финансирования {self.name}"
+
+
+class Funding(models.Model):
+    funding_source = models.ForeignKey("FundingSource", verbose_name="Источник финансирования", on_delete=models.PROTECT)
+    hospital = models.ForeignKey("Hospital", verbose_name="Больница", on_delete=models.PROTECT)
+    amount = models.PositiveIntegerField(verbose_name="Объём (тг)")
+
+    class Meta:
+        verbose_name = "Связь Больница-Финансирование"
+        verbose_name_plural = "Связи Больница-Финансирование"
+        unique_together = ('funding_source', 'hospital')
+
+    def __str__(self):
+        return f"Связь Больница-Источник Финансирования {self.hospital} - {self.funding_source} ({self.amount}тг.)"
+
+
+class ExpensesPurpose(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Название")
+
+    class Meta:
+        verbose_name = "Цель расходов"
+        verbose_name_plural = "Цели расходов"
+
+    def __str__(self):
+        return f"Цель расходов {self.name}"
+
+
+class Expense(models.Model):
+    expenses_purpose = models.ForeignKey("ExpensesPurpose", verbose_name="Цель расхода", on_delete=models.PROTECT)
+    hospital = models.ForeignKey("Hospital", verbose_name="Больница", on_delete=models.PROTECT)
+    amount = models.PositiveIntegerField(verbose_name="Объём (тг)")
+
+    class Meta:
+        verbose_name = "Связь Больница-Расход"
+        verbose_name_plural = "Связи Больница-Расход"
+        unique_together = ('expenses_purpose', 'hospital')
+
+    def __str__(self):
+        return f"Связь Больница-Расход {self.hospital} - {self.expenses_purpose} ({self.amount}тг.)"
