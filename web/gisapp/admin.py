@@ -101,6 +101,12 @@ class SurgeryTypeAdmin(admin.ModelAdmin):
     search_fields = ('name', 'code')
 
 
+class StayProfileAdmin(admin.ModelAdmin):
+    list_filter = ()
+    list_display = ('name', )
+    search_fields = ('name', )
+
+
 admin.site.register(Region, RegionAdmin)
 admin.site.register(District, DistrictAdmin)
 admin.site.register(Town, TownAdmin)
@@ -117,3 +123,4 @@ admin.site.register(PatientStay, PatientStayAdmin)
 admin.site.register(Citizenship, CitizenshipAdmin)
 admin.site.register(Ethnicity, EthnicityAdmin)
 admin.site.register(SurgeryType, SurgeryTypeAdmin)
+admin.site.register(StayProfile, StayProfileAdmin)

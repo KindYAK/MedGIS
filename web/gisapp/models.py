@@ -191,8 +191,12 @@ class MKBClass(models.Model):
 
 class PatientStay(models.Model):
     rpnID = models.PositiveIntegerField(verbose_name="rpnID")
+    case_id = models.PositiveIntegerField(verbose_name="ID случая")
+    illness_history = models.PositiveIntegerField(verbose_name="История болезни")
 
+    from_where = models.CharField(max_length=75, null=True, blank=True, verbose_name="Кем направлен")
     from_hospital = models.ForeignKey('Hospital', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Больница откуда направили", related_name="from_hospital")
+    fix_hospital = models.ForeignKey('Hospital', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Больница прикрепления", related_name="fix_hospital")
     hospital = models.ForeignKey('Hospital', on_delete=models.PROTECT, verbose_name="Больница")
 
     birth_date = models.DateField(verbose_name="Дата рождения")
@@ -210,6 +214,7 @@ class PatientStay(models.Model):
         (1, 'Село')
     ), verbose_name="Село/Город")
 
+    profile = models.ForeignKey('StayProfile', on_delete=models.PROTECT, verbose_name="Профиль")
     mkb = models.ForeignKey('MKBClass', on_delete=models.PROTECT, verbose_name="Класс МКБ")
     mkb_complication = models.ForeignKey('MKBClass', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Осложнение - Класс МКБ", related_name="mbk_complication")
     surgery = models.ForeignKey('SurgeryType', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Тип операции")
@@ -222,6 +227,14 @@ class PatientStay(models.Model):
     is_planned = models.BooleanField(verbose_name="Планово")
     is_urgent = models.BooleanField(verbose_name="Экстренно")
     benefits = models.CharField(max_length=30, verbose_name="Льгота")
+
+    diagnosis = models.CharField(max_length=150, null=True, blank=True, verbose_name="Диагноз заключительный")
+    diagnosis_type = models.PositiveSmallIntegerField(choices=(
+        (0, 'Основное'),
+        (1, 'Сопутствующее'),
+        (2, 'Уточняющее'),
+    ), verbose_name="Вид диагноза")
+    is_diagnosis_final = models.BooleanField(default=True, verbose_name="Заключительный ли диагноз")
 
     stay_result = models.PositiveSmallIntegerField(choices=(
         (0, 'Выписан'),
@@ -236,6 +249,17 @@ class PatientStay(models.Model):
         (3, 'Ухудшение'),
         (4, 'Улучшение'),
     ), verbose_name="Исход лечения")
+
+
+class StayProfile(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+
+    class Meta:
+        verbose_name = "Профиль случая"
+        verbose_name_plural = "Профили случаев"
+
+    def __str__(self):
+        return f"Профиль случая {self.name}"
 
 
 class Citizenship(models.Model):
