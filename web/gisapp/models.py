@@ -24,9 +24,10 @@ class Region(GeoObject):
 
 class District(GeoObject):
     region = models.ForeignKey('Region', on_delete=models.PROTECT, verbose_name="Область")
-    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+    name = models.CharField(max_length=50, verbose_name="Название")
 
     class Meta:
+        unique_together = ('region', 'name')
         verbose_name = "Район"
         verbose_name_plural = "Районы"
 
@@ -36,9 +37,10 @@ class District(GeoObject):
 
 class Town(GeoObject):
     district = models.ForeignKey('District', on_delete=models.PROTECT, verbose_name="Район")
-    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+    name = models.CharField(max_length=50, verbose_name="Название")
 
     class Meta:
+        unique_together = ('district', 'name')
         verbose_name = "Населённый пункт"
         verbose_name_plural = "Населённые пункты"
 
@@ -47,38 +49,38 @@ class Town(GeoObject):
 
 
 class Hospital(GeoObject):
-    town = models.ForeignKey('Town', on_delete=models.PROTECT, verbose_name="Населённый пункт")
-    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+    town = models.ForeignKey('Town', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Населённый пункт")
+    name = models.CharField(max_length=500, unique=True, verbose_name="Название")
 
-    service_types = models.ManyToManyField('ServiceType', verbose_name="Типы услуг")
-    equipments = models.ManyToManyField('EquipmentType', verbose_name="Оборудование", through="EquipmentHospital")
+    service_types = models.ManyToManyField('ServiceType', blank=True, verbose_name="Типы услуг")
+    equipments = models.ManyToManyField('EquipmentType', blank=True, verbose_name="Оборудование", through="EquipmentHospital")
 
-    fundings = models.ManyToManyField('FundingSource', verbose_name="Финансирование", through="Funding")
-    expenses = models.ManyToManyField('ExpensesPurpose', verbose_name="Расходы", through="Expense")
+    fundings = models.ManyToManyField('FundingSource', blank=True, verbose_name="Финансирование", through="Funding")
+    expenses = models.ManyToManyField('ExpensesPurpose', blank=True, verbose_name="Расходы", through="Expense")
 
-    address = models.CharField(max_length=250, verbose_name="Адрес")
+    address = models.CharField(null=True, blank=True, max_length=500, verbose_name="Адрес")
 
-    number_of_doctors_with_category = models.PositiveSmallIntegerField(verbose_name="Количество врачей с категорией")
-    number_of_doctors_without_category = models.PositiveSmallIntegerField(verbose_name="Количество врачей без категории")
-    average_yearly_employees = models.FloatField(verbose_name="Среднегодовая численность работников")
+    number_of_doctors_with_category = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Количество врачей с категорией")
+    number_of_doctors_without_category = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Количество врачей без категории")
+    average_yearly_employees = models.FloatField(null=True, blank=True, verbose_name="Среднегодовая численность работников")
 
-    area = models.FloatField(verbose_name="Площадь")
-    number_of_bed_places = models.PositiveSmallIntegerField(verbose_name="Количество койкомест")
+    area = models.FloatField(null=True, blank=True, verbose_name="Площадь")
+    number_of_bed_places = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Количество койкомест")
 
-    clinical_rating_fb = models.FloatField(verbose_name="Клинический рейтинг ФБ")
-    clinical_rating_kr = models.FloatField(verbose_name="Клинический рейтинг КР")
-    clinical_rating_max = models.FloatField(verbose_name="Клинический рейтинг max")
-    clinical_rating_stars = models.FloatField(verbose_name="Клинический рейтинг - Звёзды")
+    clinical_rating_fb = models.FloatField(null=True, blank=True, verbose_name="Клинический рейтинг ФБ")
+    clinical_rating_kr = models.FloatField(null=True, blank=True, verbose_name="Клинический рейтинг КР")
+    clinical_rating_max = models.FloatField(null=True, blank=True, verbose_name="Клинический рейтинг max")
+    clinical_rating_stars = models.FloatField(null=True, blank=True, verbose_name="Клинический рейтинг - Звёзды")
 
-    management_rating_fb = models.FloatField(verbose_name="Рейтинг по показателям менеджмента ФБ")
-    management_rating_kr = models.FloatField(verbose_name="Рейтинг по показателям менеджмента КР")
-    management_rating_max = models.FloatField(verbose_name="Рейтинг по показателям менеджмента max")
-    management_rating_stars = models.FloatField(verbose_name="Рейтинг по показателям менеджмента - Звёзды")
+    management_rating_fb = models.FloatField(null=True, blank=True, verbose_name="Рейтинг по показателям менеджмента ФБ")
+    management_rating_kr = models.FloatField(null=True, blank=True, verbose_name="Рейтинг по показателям менеджмента КР")
+    management_rating_max = models.FloatField(null=True, blank=True, verbose_name="Рейтинг по показателям менеджмента max")
+    management_rating_stars = models.FloatField(null=True, blank=True, verbose_name="Рейтинг по показателям менеджмента - Звёзды")
 
-    number_of_patients_yearly = models.PositiveIntegerField(verbose_name="Количество пациентов за год")
-    male_patients_ratio = models.FloatField(verbose_name="Доля пациентов-мужчин")
-    female_patients_ratio = models.FloatField(verbose_name="Доля пациентов-женщин")
-    patients_average_stay_days = models.FloatField(verbose_name="Среднее время пребывания пациентов")
+    number_of_patients_yearly = models.PositiveIntegerField(null=True, blank=True, verbose_name="Количество пациентов за год")
+    male_patients_ratio = models.FloatField(null=True, blank=True, verbose_name="Доля пациентов-мужчин")
+    female_patients_ratio = models.FloatField(null=True, blank=True, verbose_name="Доля пациентов-женщин")
+    patients_average_stay_days = models.FloatField(null=True, blank=True, verbose_name="Среднее время пребывания пациентов")
 
     class Meta:
         verbose_name = "Больница"
@@ -249,6 +251,13 @@ class PatientStay(models.Model):
         (3, 'Ухудшение'),
         (4, 'Улучшение'),
     ), verbose_name="Исход лечения")
+
+    class Meta:
+        verbose_name = "Госпитализация"
+        verbose_name_plural = "Госпитализации"
+
+    def __str__(self):
+        return f"Госпитализация {self.rpnID}"
 
 
 class StayProfile(models.Model):
