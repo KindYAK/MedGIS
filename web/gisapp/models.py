@@ -12,7 +12,7 @@ class GeoObject(models.Model):
 
 
 class Region(GeoObject):
-    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+    name = models.CharField(max_length=500, unique=True, verbose_name="Название")
 
     class Meta:
         verbose_name = "Область"
@@ -23,8 +23,8 @@ class Region(GeoObject):
 
 
 class District(GeoObject):
-    region = models.ForeignKey('Region', on_delete=models.PROTECT, verbose_name="Область")
-    name = models.CharField(max_length=50, verbose_name="Название")
+    region = models.ForeignKey('Region', on_delete=models.CASCADE, verbose_name="Область")
+    name = models.CharField(max_length=500, verbose_name="Название")
 
     class Meta:
         unique_together = ('region', 'name')
@@ -36,8 +36,8 @@ class District(GeoObject):
 
 
 class Town(GeoObject):
-    district = models.ForeignKey('District', on_delete=models.PROTECT, verbose_name="Район")
-    name = models.CharField(max_length=50, verbose_name="Название")
+    district = models.ForeignKey('District', on_delete=models.CASCADE, verbose_name="Район")
+    name = models.CharField(max_length=500, verbose_name="Название")
 
     class Meta:
         unique_together = ('district', 'name')
@@ -49,7 +49,7 @@ class Town(GeoObject):
 
 
 class Hospital(GeoObject):
-    town = models.ForeignKey('Town', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Населённый пункт")
+    town = models.ForeignKey('Town', null=True, blank=True, on_delete=models.CASCADE, verbose_name="Населённый пункт")
     name = models.CharField(max_length=500, unique=True, verbose_name="Название")
 
     service_types = models.ManyToManyField('ServiceType', blank=True, verbose_name="Типы услуг")
@@ -113,8 +113,8 @@ class EquipmentType(models.Model):
 
 
 class EquipmentHospital(models.Model):
-    equipment = models.ForeignKey("EquipmentType", verbose_name="Оборудование", on_delete=models.PROTECT)
-    hospital = models.ForeignKey("Hospital", verbose_name="Больница", on_delete=models.PROTECT)
+    equipment = models.ForeignKey("EquipmentType", verbose_name="Оборудование", on_delete=models.CASCADE)
+    hospital = models.ForeignKey("Hospital", verbose_name="Больница", on_delete=models.CASCADE)
     quantity = models.PositiveSmallIntegerField(verbose_name="Количество")
 
     class Meta:
@@ -138,8 +138,8 @@ class FundingSource(models.Model):
 
 
 class Funding(models.Model):
-    funding_source = models.ForeignKey("FundingSource", verbose_name="Источник финансирования", on_delete=models.PROTECT)
-    hospital = models.ForeignKey("Hospital", verbose_name="Больница", on_delete=models.PROTECT)
+    funding_source = models.ForeignKey("FundingSource", verbose_name="Источник финансирования", on_delete=models.CASCADE)
+    hospital = models.ForeignKey("Hospital", verbose_name="Больница", on_delete=models.CASCADE)
     amount = models.PositiveIntegerField(verbose_name="Объём (тг)")
 
     class Meta:
@@ -163,8 +163,8 @@ class ExpensesPurpose(models.Model):
 
 
 class Expense(models.Model):
-    expenses_purpose = models.ForeignKey("ExpensesPurpose", verbose_name="Цель расхода", on_delete=models.PROTECT)
-    hospital = models.ForeignKey("Hospital", verbose_name="Больница", on_delete=models.PROTECT)
+    expenses_purpose = models.ForeignKey("ExpensesPurpose", verbose_name="Цель расхода", on_delete=models.CASCADE)
+    hospital = models.ForeignKey("Hospital", verbose_name="Больница", on_delete=models.CASCADE)
     amount = models.PositiveIntegerField(verbose_name="Объём (тг)")
 
     class Meta:
@@ -180,7 +180,7 @@ class MKBClass(models.Model):
     name = models.CharField(max_length=500, verbose_name="Название")
     code = models.CharField(max_length=9, verbose_name="Код")
     level = models.PositiveSmallIntegerField(verbose_name="Уровень МКБ")
-    parent = models.ForeignKey('MKBClass', null=True, blank=True, on_delete=models.PROTECT)
+    parent = models.ForeignKey('MKBClass', null=True, blank=True, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = "Класс МКБ"
@@ -192,14 +192,14 @@ class MKBClass(models.Model):
 
 
 class PatientStay(models.Model):
-    rpnID = models.PositiveIntegerField(verbose_name="rpnID")
-    case_id = models.PositiveIntegerField(verbose_name="ID случая")
-    illness_history = models.PositiveIntegerField(verbose_name="История болезни")
+    rpnID = models.CharField(max_length=75, verbose_name="rpnID")
+    case_id = models.CharField(max_length=75, verbose_name="ID случая")
+    illness_history = models.CharField(max_length=75, verbose_name="История болезни")
 
     from_where = models.CharField(max_length=75, null=True, blank=True, verbose_name="Кем направлен")
-    from_hospital = models.ForeignKey('Hospital', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Больница откуда направили", related_name="from_hospital")
-    fix_hospital = models.ForeignKey('Hospital', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Больница прикрепления", related_name="fix_hospital")
-    hospital = models.ForeignKey('Hospital', on_delete=models.PROTECT, verbose_name="Больница")
+    from_hospital = models.ForeignKey('Hospital', null=True, blank=True, on_delete=models.CASCADE, verbose_name="Больница откуда направили", related_name="from_hospital")
+    fix_hospital = models.ForeignKey('Hospital', null=True, blank=True, on_delete=models.CASCADE, verbose_name="Больница прикрепления", related_name="fix_hospital")
+    hospital = models.ForeignKey('Hospital', on_delete=models.CASCADE, verbose_name="Больница")
 
     birth_date = models.DateField(verbose_name="Дата рождения")
     death_date = models.DateField(null=True, blank=True, verbose_name="Дата смерти")
@@ -209,32 +209,33 @@ class PatientStay(models.Model):
         (0, 'Мужской'),
         (1, 'Женский')
     ), verbose_name="Пол")
-    citizenship = models.ForeignKey('Citizenship', on_delete=models.PROTECT, verbose_name="Гражданство")
-    ethnicity = models.ForeignKey('Ethnicity', on_delete=models.PROTECT, verbose_name="Этнос")
+    citizenship = models.ForeignKey('Citizenship', on_delete=models.CASCADE, verbose_name="Гражданство")
+    ethnicity = models.ForeignKey('Ethnicity', on_delete=models.CASCADE, verbose_name="Этнос")
     countryside = models.PositiveSmallIntegerField(choices=(
         (0, 'Город'),
         (1, 'Село')
     ), verbose_name="Село/Город")
 
-    profile = models.ForeignKey('StayProfile', on_delete=models.PROTECT, verbose_name="Профиль")
-    mkb = models.ForeignKey('MKBClass', on_delete=models.PROTECT, verbose_name="Класс МКБ")
-    mkb_complication = models.ForeignKey('MKBClass', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Осложнение - Класс МКБ", related_name="mbk_complication")
-    surgery = models.ForeignKey('SurgeryType', null=True, blank=True, on_delete=models.PROTECT, verbose_name="Тип операции")
+    profile = models.ForeignKey('StayProfile', on_delete=models.CASCADE, verbose_name="Профиль")
+    mkb = models.ForeignKey('MKBClass', on_delete=models.CASCADE, verbose_name="Класс МКБ")
+    mkb_complication = models.ForeignKey('MKBClass', null=True, blank=True, on_delete=models.CASCADE, verbose_name="Осложнение - Класс МКБ", related_name="mbk_complication")
+    surgery = models.ForeignKey('SurgeryType', null=True, blank=True, on_delete=models.CASCADE, verbose_name="Тип операции")
     surgery_date = models.DateField(null=True, blank=True, verbose_name="Дата операции")
     admission_date = models.DateField(verbose_name="Дата поступления")
     discharge_date = models.DateField(verbose_name="Дата выписки")
     days_spent = models.PositiveSmallIntegerField(verbose_name="Проведено койко-дней")
     amount_to_pay = models.FloatField(verbose_name="Предъявленная сумма к оплате")
-    funding_source = models.ForeignKey('FundingSource', verbose_name="Источник финансирования", on_delete=models.PROTECT)
+    funding_source = models.ForeignKey('FundingSource', verbose_name="Источник финансирования", on_delete=models.CASCADE)
     is_planned = models.BooleanField(verbose_name="Планово")
     is_urgent = models.BooleanField(verbose_name="Экстренно")
-    benefits = models.CharField(max_length=30, verbose_name="Льгота")
+    benefits = models.CharField(max_length=1500, verbose_name="Льгота")
 
-    diagnosis = models.CharField(max_length=150, null=True, blank=True, verbose_name="Диагноз заключительный")
+    diagnosis = models.CharField(max_length=1500, null=True, blank=True, verbose_name="Диагноз заключительный")
     diagnosis_type = models.PositiveSmallIntegerField(choices=(
         (0, 'Основное'),
         (1, 'Сопутствующее'),
         (2, 'Уточняющее'),
+        (3, 'Осложнение')
     ), verbose_name="Вид диагноза")
     is_diagnosis_final = models.BooleanField(default=True, verbose_name="Заключительный ли диагноз")
 
@@ -250,6 +251,7 @@ class PatientStay(models.Model):
         (2, 'Без перемен'),
         (3, 'Ухудшение'),
         (4, 'Улучшение'),
+        (5, 'Переведен в круглосуточный стационар'),
     ), verbose_name="Исход лечения")
 
     class Meta:
@@ -261,7 +263,7 @@ class PatientStay(models.Model):
 
 
 class StayProfile(models.Model):
-    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+    name = models.CharField(max_length=500, unique=True, verbose_name="Название")
 
     class Meta:
         verbose_name = "Профиль случая"
@@ -272,7 +274,7 @@ class StayProfile(models.Model):
 
 
 class Citizenship(models.Model):
-    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+    name = models.CharField(max_length=500, unique=True, verbose_name="Название")
 
     class Meta:
         verbose_name = "Гражданство"
@@ -283,7 +285,7 @@ class Citizenship(models.Model):
 
 
 class Ethnicity(models.Model):
-    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
+    name = models.CharField(max_length=500, unique=True, verbose_name="Название")
 
     class Meta:
         verbose_name = "Этнос"
@@ -294,8 +296,8 @@ class Ethnicity(models.Model):
 
 
 class SurgeryType(models.Model):
-    name = models.CharField(max_length=50, unique=True, verbose_name="Название")
-    code = models.CharField(max_length=50, unique=True, verbose_name="Код")
+    name = models.CharField(max_length=500, unique=True, verbose_name="Название")
+    code = models.CharField(max_length=500, unique=True, verbose_name="Код")
 
     class Meta:
         verbose_name = "Операция"
