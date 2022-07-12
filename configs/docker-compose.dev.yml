@@ -9,6 +9,7 @@ services:
     volumes:
       - ../web:/opt/app
       - media_root:/opt/app/media_root
+      - ../data/is_ersb:/is_ersb
     tty: true
     stdin_open: true
   nginx:
