@@ -3,6 +3,10 @@
 {% block title %}Главная{% endblock %}
 {% block heading %}Главная{% endblock %}
 
+{% block head %}
+    <script src="https://api-maps.yandex.ru/2.1/?apikey={{ yandex_map_api_key }}&lang=en_US" type="text/javascript"></script>
+{% endblock %}
+
 {% block bc %}
     <li class="breadcrumb-item"><a href="/">MedGIS</a></li>
     <li class="breadcrumb-item active">Главная</li>
@@ -16,12 +20,23 @@
                     <div class="card-body">
                         <h5 class="card-title">ГИС</h5>
 
-
-
+                        <div id="map" style="width: 100%; height: 600px"></div>
                     </div>
                 </div>
             </div>
         </div>
         <!-- /.row -->
     </div><!-- /.container-fluid -->
+
+    <script type="text/javascript">
+        ymaps.ready(init);
+
+        function init() {
+            var myMap = new ymaps.Map("map", {
+                // Default order: “latitude, longitude”.
+                center: [43.235463, 76.894727],
+                zoom: 12
+            });
+        }
+    </script>
 {% endblock %}
