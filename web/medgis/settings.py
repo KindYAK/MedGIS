@@ -142,7 +142,7 @@ else:
 WSGI_APPLICATION = 'medgis.wsgi.application'
 
 
-# LOGIN_REDIRECT_URL = "/login_redirect/"
+LOGIN_REDIRECT_URL = "/login_redirect/"
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
@@ -281,3 +281,5 @@ EMAIL_HOST_USER = os.getenv('DJANGO_EMAIL_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('DJANGO_EMAIL_PASSWORD', '')
 EMAIL_USE_SSL = True
 DEFAULT_FROM_EMAIL = os.getenv('DJANGO_EMAIL_FROM', '')
+
+YANDEX_MAP_API_KEY = os.getenv('YANDEX_MAP_API_KEY', '')

@@ -15,7 +15,7 @@ from .services_es_documents import execute_search, es_filter
 
 
 def login_redirect(request):
-    return HttpResponseRedirect(reverse_lazy('massmedia:search'))
+    return HttpResponseRedirect(reverse_lazy('massmedia:index'))
 
 
 class SearchView(TemplateView):
