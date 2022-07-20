@@ -21,6 +21,7 @@ from medgis.settings import STATIC_URL, STATIC_ROOT
 
 urlpatterns = [
     path('', include('massmedia.urls', namespace='massmedia')),
+    path('gis/', include('gisapp.urls', namespace='gisapp')),
 
     path('jet/', include('jet.urls', namespace='jet')),
 

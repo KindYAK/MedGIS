@@ -131,11 +131,29 @@
                     data-accordion="false">
                     {% if request.user.is_authenticated %}
                         <li class="nav-item">
+                            <a href="{% url 'massmedia:index' %}"
+                               class="nav-link {% if request.resolver_match.url_name == "index" %}active{% endif %}">
+                                <i class="nav-icon fas fa-info-circle"></i>
+                                <p>
+                                    Главная
+                                </p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'gisapp:gis' %}"
+                               class="nav-link {% if request.resolver_match.url_name == "gis" %}active{% endif %}">
+                                <i class="nav-icon fas fa-globe-asia"></i>
+                                <p>
+                                    ГИС
+                                </p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a href="{% url 'massmedia:search' %}"
                                class="nav-link {% if request.resolver_match.url_name == "search" %}active{% endif %}">
-                                <i class="nav-icon fas fa-search-plus"></i>
+                                <i class="nav-icon fas fa-newspaper"></i>
                                 <p>
-                                    Поиск
+                                    Поиск публикаций
                                 </p>
                             </a>
                         </li>
