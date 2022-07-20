@@ -4,7 +4,13 @@
 {% block heading %}Главная{% endblock %}
 
 {% block head %}
-    <script src="https://api-maps.yandex.ru/2.1/?apikey={{ yandex_map_api_key }}&lang=en_US" type="text/javascript"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey={{ yandex_map_api_key }}&lang=ru-RU" type="text/javascript"></script>
+
+    <style>
+        .ymaps-2-1-79-copyright, .ymaps-2-1-79-map-copyrights-promo {
+            display: none !important;
+        }
+    </style>
 {% endblock %}
 
 {% block bc %}
@@ -35,8 +41,18 @@
             var myMap = new ymaps.Map("map", {
                 // Default order: “latitude, longitude”.
                 center: [43.235463, 76.894727],
-                zoom: 12
+                zoom: 12,
+                controls: ['fullscreenControl', 'zoomControl']
             });
+
+            var myPlacemark = new ymaps.Placemark([43.235463, 76.894727], {
+                balloonContentHeader: 'A long time ago',
+                balloonContentBody: 'In a galaxy<br><table style="border: 1px black solid"><tr style="border: 1px black solid"><td>HELLO!!</td></tr><tr><td>HELLO!!</td></tr><tr><td>HELLO!!</td></tr></table>',
+                balloonContentFooter: 'Far, Far Away...',
+                hintContent: 'May the Force be with you!'
+            });
+
+            myMap.geoObjects.add(myPlacemark);
         }
     </script>
 {% endblock %}
